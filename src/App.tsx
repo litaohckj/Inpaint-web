@@ -30,6 +30,7 @@ function App() {
 
   useEffect(() => {
     downloadModel('inpaint', setDownloadProgress)
+    downloadModel('superResolution', setDownloadProgress)
   }, [])
 
   useClickAway(modalRef, () => {

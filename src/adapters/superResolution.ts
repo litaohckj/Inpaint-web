@@ -196,8 +196,9 @@ function configEnv(capabilities: {
   simd: any
   threads: any
 }) {
-  ort.env.wasm.wasmPaths =
-    'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.16.3/dist/'
+  ort.env.wasm.wasmPaths = 'https://pic.hisheai.com/model/'
+  // ort.env.wasm.wasmPaths =
+  //   'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.16.3/dist/'
   if (capabilities.webgpu) {
     ort.env.wasm.numThreads = 1
   } else {
@@ -248,6 +249,7 @@ function imageDataToDataURL(imageData: ImageData) {
   // 导出为数据 URL
   return canvas.toDataURL()
 }
+
 let model: ArrayBuffer | null = null
 export default async function superResolution(
   imageFile: File | HTMLImageElement,
@@ -258,6 +260,7 @@ export default async function superResolution(
     const capabilities = await getCapabilities()
     configEnv(capabilities)
     const modelBuffer = await ensureModel('superResolution')
+    debugger;
     model = await ort.InferenceSession.create(modelBuffer, {
       executionProviders: [capabilities.webgpu ? 'webgpu' : 'wasm'],
     })
@@ -275,6 +278,7 @@ export default async function superResolution(
     img.height,
     img.width,
   ])
+  debugger;
 
   const result = await tileProc(imageTensor, model, callback)
   console.time('postProcess')

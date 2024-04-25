@@ -9,44 +9,68 @@ localforage.config({
 export async function saveModel(modelType: modelType, modelBlob: ArrayBuffer) {
   await localforage.setItem(getModel(modelType).name, modelBlob)
 }
-
 function getModel(modelType: modelType) {
   if (modelType === 'inpaint') {
-    const modelList = [
-      {
-        name: 'model',
-        url: 'https://huggingface.co/lxfater/inpaint-web/resolve/main/migan.onnx',
-        backupUrl: '',
-      },
-      {
-        name: 'model-perf',
-        url: 'https://huggingface.co/andraniksargsyan/migan/resolve/main/migan.onnx',
-        backupUrl: '',
-      },
-      {
-        name: 'migan-pipeline-v2',
-        url: 'https://huggingface.co/andraniksargsyan/migan/resolve/main/migan_pipeline_v2.onnx',
-        backupUrl:
-          'https://worker-share-proxy-01f5.lxfater.workers.dev/andraniksargsyan/migan/resolve/main/migan_pipeline_v2.onnx',
-      },
-    ]
-    const currentModel = modelList[2]
-    return currentModel
+    console.log(modelType, 'https://huggingface.co/andraniksargsyan/migan/resolve/main/migan_pipeline_v2.onnx')
+    return  {
+      name: 'migan-pipeline-v2',
+      // url: 'https://huggingface.co/andraniksargsyan/migan/resolve/main/migan_pipeline_v2.onnx', // 涂抹模型
+      url: './migan_pipeline_v2.onnx', // 涂抹模型
+      backupUrl:
+        'https://worker-share-proxy-01f5.lxfater.workers.dev/andraniksargsyan/migan/resolve/main/migan_pipeline_v2.onnx', // fallback
+    }
   }
   if (modelType === 'superResolution') {
-    const modelList = [
-      {
-        name: 'realesrgan-x4',
-        url: 'https://huggingface.co/lxfater/inpaint-web/resolve/main/realesrgan-x4.onnx',
-        backupUrl:
-          'https://worker-share-proxy-01f5.lxfater.workers.dev/lxfater/inpaint-web/resolve/main/realesrgan-x4.onnx',
-      },
-    ]
-    const currentModel = modelList[0]
-    return currentModel
+    console.log('superResolution', 'https://huggingface.co/lxfater/inpaint-web/resolve/main/realesrgan-x4.onnx')
+    return {
+      name: 'realesrgan-x4',
+      // url: 'https://huggingface.co/lxfater/inpaint-web/resolve/main/realesrgan-x4.onnx', // 四倍放大模型
+      url: './realesrgan-x4.onnx', // 四倍放大模型
+      backupUrl: 
+        'https://worker-share-proxy-01f5.lxfater.workers.dev/lxfater/inpaint-web/resolve/main/realesrgan-x4.onnx' // fallback
+    }
   }
   throw new Error('wrong modelType')
 }
+
+
+// function getModel(modelType: modelType) {
+//   if (modelType === 'inpaint') {
+//     const modelList = [
+//       {
+//         name: 'model',
+//         url: 'https://huggingface.co/lxfater/inpaint-web/resolve/main/migan.onnx',
+//         backupUrl: '',
+//       },
+//       {
+//         name: 'model-perf',
+//         url: 'https://huggingface.co/andraniksargsyan/migan/resolve/main/migan.onnx',
+//         backupUrl: '',
+//       },
+//       {
+//         name: 'migan-pipeline-v2',
+//         url: 'https://huggingface.co/andraniksargsyan/migan/resolve/main/migan_pipeline_v2.onnx',
+//         backupUrl:
+//           'https://worker-share-proxy-01f5.lxfater.workers.dev/andraniksargsyan/migan/resolve/main/migan_pipeline_v2.onnx',
+//       },
+//     ]
+//     const currentModel = modelList[2]
+//     return currentModel
+//   }
+//   if (modelType === 'superResolution') {
+//     const modelList = [
+//       {
+//         name: 'realesrgan-x4',
+//         url: 'https://huggingface.co/lxfater/inpaint-web/resolve/main/realesrgan-x4.onnx',
+//         backupUrl:
+//           'https://worker-share-proxy-01f5.lxfater.workers.dev/lxfater/inpaint-web/resolve/main/realesrgan-x4.onnx',
+//       },
+//     ]
+//     const currentModel = modelList[0]
+//     return currentModel
+//   }
+//   throw new Error('wrong modelType')
+// }
 
 export async function loadModel(modelType: modelType): Promise<ArrayBuffer> {
   const model = (await localforage.getItem(
@@ -60,17 +84,30 @@ export async function modelExists(modelType: modelType) {
   return model !== null && model !== undefined
 }
 
+/**
+ * 
+ * @param modelType 
+ * @returns 
+ */
 export async function ensureModel(modelType: modelType) {
   if (await modelExists(modelType)) {
     return loadModel(modelType)
   }
-  const model = getModel(modelType)
-  const response = await fetch(model.url)
-  const buffer = await response.arrayBuffer()
-  await saveModel(modelType, buffer)
-  return buffer
+  try {
+    const model = getModel(modelType)
+    const response = await fetch(model.url)
+    console.log('response', response);
+    const buffer = await response.arrayBuffer()
+    await saveModel(modelType, buffer)
+    return buffer
+  } catch (e) {
+    debugger;
+  }
 }
 
+
+
+// 下载模型
 export async function downloadModel(
   modelType: modelType,
   setDownloadProgress: (arg0: number) => void
@@ -110,7 +147,6 @@ export async function downloadModel(
       buffer.set(chunk, offset)
       offset += chunk.length
     }
-
     await saveModel(modelType, buffer)
     setDownloadProgress(100)
   }

@@ -315,7 +315,7 @@ export default function Editor(props: EditorProps) {
   }, [separator, context])
 
   function download() {
-    const currRender = renders.at(-1) ?? original
+    const currRender = renders[renders.length - 1] ?? original
     downloadImage(currRender.currentSrc, 'IMG')
   }
 
@@ -461,12 +461,13 @@ export default function Editor(props: EditorProps) {
       setDownloaded(true)
     }
     setIsProcessingLoading(true)
+    debugger;
     try {
       // 运行
       const start = Date.now()
       console.log('superResolution_start')
       // each time based on the last result, the first is the original
-      const newFile = renders.at(-1) ?? file
+      const newFile = renders[renders.length -1] ?? file
       const res = await superResolution(newFile, setGenerateProgress)
       if (!res) {
         throw new Error('empty response')
